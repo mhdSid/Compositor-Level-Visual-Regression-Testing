@@ -5,96 +5,95 @@
 Traditional visual regression testing (VRT) compares screenshots pixel-by-pixel, but this approach generates false positives because the same webpage produces different pixels on different machines due to OS-specific font rendering, GPU drivers, and color profiles.
 
 ```
-                    🖥️ YOUR WEB PAGE
-                           |
-                           ↓
-                  [Browser Engine Starts]
-                           |
-    ┌──────────────────────┴──────────────────────┐
-    │      DETERMINISTIC RENDERING STEPS          │
-    │         (Same on Every Machine)             │
-    │                                             │
-    │  1. PARSE: HTML/CSS → DOM + Style Trees     │
-    │     "Convert text to objects"               │
-    │                                             │
-    │  2. LAYOUT: Calculate positions & sizes     │
-    │     "Where does each element go?"           │
-    │     → div: {x:100px, y:50px, w:200px}       │
-    │                                             │
-    │  3. LAYER: Assign elements to layers        │
-    │     "What needs its own drawing surface?"   │
-    │     → Layer 1: background                   │
-    │     → Layer 2: scrolling content            │
-    │     → Layer 3: position:fixed header        │
-    │                                             │
-    │  4. PAINT: Generate draw commands           │
-    │     "List of instructions to draw"          │
-    │     → DrawRect(10, 20, 100, 50)             │
-    │     → FillText("Hello", 15, 35)             │
-    │     → SetColor(255, 0, 0)                   │
-    └──────────────────────┬──────────────────────┘
-                           |
-                    ╔══════▼══════╗
-                    ║ 🎯 WE CATCH ║ ← Chrome DevTools Protocol
-                    ║   IT HERE!  ║   LayerTree.makeSnapshot()
-                    ╚══════╤══════╝   "Grab the instruction list"
-                           |
-            ┌──────────────┴──────────────┐
-            ↓                              ↓
-     [Extract Paint Commands]      [Continue to Rasterization]
-     "Save as JSON + Hash"         "Turn instructions into pixels"
-            ↓                              ↓
-     SHA-256: "a7f3b2c9..."              ↓
-     ✅ SAME HASH EVERYWHERE              ↓
-                                          ↓
-    ┌─────────────────────────────────────┴─────────────────┐
-    │        PLATFORM-SPECIFIC RENDERING STEPS              │
-    │           (Different on Each Machine)                 │
-    │                                                       │
-    │  5. RASTERIZE: Convert vectors to pixels              │
-    │     "Actually draw the pixels"                        │
-    │     → Windows: DirectWrite + ClearType subpixels      │
-    │     → macOS: Core Text + Quartz smoothing             │
-    │     → Linux: FreeType + grayscale antialiasing        │
-    │                                                       │
-    │  6. COMPOSITE: Combine layers                         │
-    │     "Stack all layers together"                       │
-    │     → GPU blending, transparency, effects             │
-    │                                                       │
-    │  7. DISPLAY: Send to screen                           │
-    │     "Color space conversion + monitor output"         │
-    │     → sRGB vs Display P3 vs Adobe RGB                 │
-    └───────────────────────────────────────────────────────┘
-                           ↓
-                    📸 SCREENSHOT/PIXELS
-                  "What traditional VRT captures"
-                           ↓
-    ┌─────────────────────────────────────────────────────┐
-    │  8. FINAL VISUAL OUTPUT - What Human Eyes See       │
-    │                                                     │
-    │  Windows:  [Submit] ← Sharp, blue-tinted subpixels  │
-    │  macOS:    [Submit] ← Smooth, warmer rendering      │
-    │  Linux:    [Submit] ← Grayscale, thinner strokes    │
-    │                                                     │
-    │  Same button, but:                                  │
-    │  • Different pixel values at edges (antialiasing)   │
-    │  • Different RGB values (color profiles)            │
-    │  • Different letter spacing (font rendering)        │
-    │  • Different button height (font metrics)           │
-    │                                                     │
-    │  Traditional VRT: Compares these pixels ❌          │
-    │  "Pixel at (45,20): RGB(51,51,51) vs RGB(48,48,48)" │
-    │  Result: FALSE POSITIVE - Test fails!               │
-    │                                                     │
-    │  Why it fails:                                      │
-    │  • 1px font shift = thousands of pixel differences  │
-    │  • Subpixel AA = every edge is different            │
-    │  • Color space = all colors slightly off            │
-    │  • GPU driver update = rendering changes            │
-    └─────────────────────────────────────────────────────┘
-                           ↓
-            🚫 "Comparing photos of the same recipe
-                cooked in different ovens"
+                          🖥️ YOUR WEB PAGE
+                                 |
+                                 ↓
+                        [Browser Engine Starts]
+                                 |
+    ┌────────────────────────────┴────────────────────────────┐
+    │            DETERMINISTIC RENDERING STEPS                │
+    │              (Same on Every Machine)                    │
+    │                                                         │
+    │  1. PARSE: HTML/CSS → DOM + Style Trees                 │
+    │     "Convert text to objects"                           │
+    │                                                         │
+    │  2. LAYOUT: Calculate positions & sizes                 │
+    │     "Where does each element go?"                       │
+    │     → div: {x:100px, y:50px, w:200px}                   │
+    │                                                         │
+    │  3. LAYER: Assign elements to layers                    │
+    │     "What needs its own drawing surface?"               │
+    │     → Layer 1: background                               │
+    │     → Layer 2: scrolling content                        │
+    │     → Layer 3: position:fixed header                    │
+    │                                                         │
+    │  4. PAINT: Generate draw commands                       │
+    │     "List of instructions to draw"                      │
+    │     → DrawRect(10, 20, 100, 50)                         │
+    │     → FillText("Hello", 15, 35)                         │
+    │     → SetColor(255, 0, 0)                               │
+    └────────────────────────────┬────────────────────────────┘
+                                 |
+                          ╔══════▼══════╗
+                          ║ 🎯 WE CATCH ║  ← Chrome DevTools Protocol
+                          ║   IT HERE!  ║     LayerTree.makeSnapshot()
+                          ╚══════╤══════╝     "Grab the instruction list"
+                                 |
+                 ┌───────────────┴───────────────┐
+                 ↓                               ↓
+      [Extract Paint Commands]          [Continue to Rasterization]
+      "Save as JSON + Hash"              "Turn instructions into pixels"
+                 ↓                               ↓
+      SHA-256: "a7f3b2c9..."                     ↓
+      ✅ SAME HASH EVERYWHERE                    ↓
+    ┌────────────────────────────────────────────┴───────────────────────┐
+    │             PLATFORM-SPECIFIC RENDERING STEPS                      │
+    │                (Different on Each Machine)                         │
+    │                                                                    │
+    │  5. RASTERIZE: Convert vectors to pixels                           │
+    │     "Actually draw the pixels"                                     │
+    │     → Windows: DirectWrite + ClearType subpixels                   │
+    │     → macOS: Core Text + Quartz smoothing                          │
+    │     → Linux: FreeType + grayscale antialiasing                     │
+    │                                                                    │
+    │  6. COMPOSITE: Combine layers                                      │
+    │     "Stack all layers together"                                    │
+    │     → GPU blending, transparency, effects                          │
+    │                                                                    │
+    │  7. DISPLAY: Send to screen                                        │
+    │     "Color space conversion + monitor output"                      │
+    │     → sRGB vs Display P3 vs Adobe RGB                              │
+    └────────────────────────────────────────────────────────────────────┘
+                                 ↓
+                          📸 SCREENSHOT/PIXELS
+                        "What traditional VRT captures"
+                                 ↓
+    ┌────────────────────────────────────────────────────────────────────┐
+    │  8. FINAL VISUAL OUTPUT - What Human Eyes See                      │
+    │                                                                    │
+    │  Windows:  [Submit] ← Sharp, blue-tinted subpixels                 │
+    │  macOS:    [Submit] ← Smooth, warmer rendering                     │
+    │  Linux:    [Submit] ← Grayscale, thinner strokes                   │
+    │                                                                    │
+    │  Same button, but:                                                 │
+    │  • Different pixel values at edges (antialiasing)                  │
+    │  • Different RGB values (color profiles)                           │
+    │  • Different letter spacing (font rendering)                       │
+    │  • Different button height (font metrics)                          │
+    │                                                                    │
+    │  Traditional VRT: Compares these pixels ❌                         │
+    │  "Pixel at (45,20): RGB(51,51,51) vs RGB(48,48,48)"                │
+    │  Result: FALSE POSITIVE - Test fails!                              │
+    │                                                                    │
+    │  Why it fails:                                                     │
+    │  • 1px font shift = thousands of pixel differences                 │
+    │  • Subpixel AA = every edge is different                           │
+    │  • Color space = all colors slightly off                           │
+    │  • GPU driver update = rendering changes                           │
+    └────────────────────────────────────────────────────────────────────┘
+                                 ↓
+               🚫 "Comparing photos of the same recipe
+                   cooked in different ovens"
 ```
 
 ## The Solution: Compositor-Level Interception
