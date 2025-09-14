@@ -23259,5 +23259,7 @@
     ]
   ],
   "hash": "c9060c1da6962157",
-  "count": 14
+  "count": 14,
+  "imagePath": "./compositor-images/actual.png",
+  "timestamp": "2025-09-14T14:43:56.868Z"
 }

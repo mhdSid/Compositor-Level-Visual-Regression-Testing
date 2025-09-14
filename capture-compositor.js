@@ -14,7 +14,24 @@ const log = verbose ? console.log : () => {}
 
 let browser = null
 
-async function extractPaintCommands(url) {
+async function captureScreenshot(page, filename) {
+	const screenshot = await page.screenshot({
+		fullPage: true,
+		type: 'png',
+	})
+	
+	// Create images directory if it doesn't exist
+	const imagesDir = './compositor-images'
+	fs.mkdirSync(imagesDir, { recursive: true })
+	
+	// Save the screenshot
+	fs.writeFileSync(`${imagesDir}/${filename}`, screenshot)
+	log(`Screenshot saved: ${imagesDir}/${filename}`)
+	
+	return screenshot
+}
+
+async function extractPaintCommands(url, captureImage = false, imageName = null) {
 	if (!browser) {
 		browser = await puppeteer.launch({
 			headless: true,
@@ -25,6 +42,12 @@ async function extractPaintCommands(url) {
 	
 	// Navigate FIRST
 	await page.goto(url, { waitUntil: 'networkidle0' })
+	
+	// Capture screenshot if requested
+	let screenshotBuffer = null
+	if (captureImage && imageName) {
+		screenshotBuffer = await captureScreenshot(page, imageName)
+	}
 	
 	// Get CDP session AFTER navigation
 	const client = await page.target().createCDPSession()
@@ -150,6 +173,7 @@ async function extractPaintCommands(url) {
 		commands: allCommands,
 		hash: hash.substring(0, 16),
 		count: allCommands.length,
+		screenshot: screenshotBuffer,
 	}
 }
 
@@ -162,6 +186,7 @@ async function loadExistingCommands(filename) {
 			commands: parsed.commands,
 			hash: parsed.hash,
 			count: parsed.count,
+			imagePath: parsed.imagePath,
 		}
 	} catch (e) {
 		return null
@@ -177,27 +202,44 @@ async function comparePages() {
 	if (baseline && baseline.hash && baseline.count > 0) {
 		log('✓ Found valid baseline.json')
 		log(`  Baseline hash: ${baseline.hash}, ${baseline.count} command logs`)
+		if (baseline.imagePath) {
+			log(`  Image: ${baseline.imagePath}`)
+		}
 	} else {
 		// Either doesn't exist or is invalid - create new baseline
 		log('No valid baseline found. Creating new baseline...')
-		baseline = await extractPaintCommands('file://' + __dirname + '/test.html')
+		baseline = await extractPaintCommands(
+			'file://' + __dirname + '/test.html',
+			true,  // captureImage
+			'baseline.png'  // imageName
+		)
+		
 		// Save the FULL object structure, not just commands
 		fs.writeFileSync('baseline.json', JSON.stringify({
 			commands: baseline.commands,
 			hash: baseline.hash,
 			count: baseline.count,
+			imagePath: './compositor-images/baseline.png',
+			timestamp: new Date().toISOString(),
 		}, null, 2))
 		log(`✓ Baseline created: hash=${baseline.hash}, ${baseline.count} command logs`)
 	}
 	
-	// Always capture fresh actual
+	// Always capture fresh actual with image
 	log('\nCapturing actual state...')
-	const actual = await extractPaintCommands('file://' + __dirname + '/test.html')
-	// Save the FULL object structure, not just commands
+	const actual = await extractPaintCommands(
+		'file://' + __dirname + '/test.html',
+		true,  // captureImage
+		'actual.png'  // imageName
+	)
+	
+	// Save the FULL object structure
 	fs.writeFileSync('actual.json', JSON.stringify({
 		commands: actual.commands,
 		hash: actual.hash,
 		count: actual.count,
+		imagePath: './compositor-images/actual.png',
+		timestamp: new Date().toISOString(),
 	}, null, 2))
 	log(`✓ Actual captured: hash=${actual.hash}, ${actual.count} command logs`)
 	
@@ -208,10 +250,15 @@ async function comparePages() {
 	console.log(`${identical ? '✅' : '❌'} Result: ${identical ? 'MATCH' : 'MISMATCH'}`)
 	console.log(`Baseline: ${baseline.hash}`)
 	console.log(`Actual:   ${actual.hash}`)
+	
+	if (identical) {
+		console.log('Images: ./compositor-images/[baseline.png, actual.png]')
+	}
 
 	if (!identical && baseline.count > 0 && actual.count > 0) {
-		log('\n⚠️  Visual regression detected!')
-		log('  Check baseline.json and actual.json for differences')
+		console.log('\n⚠️  Visual regression detected!')
+		console.log('  Check images: ./compositor-images/[baseline.png, actual.png]')
+		console.log('  Check JSON: baseline.json and actual.json for differences')
 		
 		// Try to show where they differ
 		if (baseline.commands.length !== actual.commands.length) {
@@ -241,10 +288,11 @@ Usage: node capture-compositor.js [options]
 Options:
   --verbose, -v    Show detailed output
   --reset, -r      Reset baseline
-  --clean          Clean all files
+  --clean          Clean all files and images
   --help, -h       Show this help
 
 By default runs in silent mode (minimal output).
+Images are saved to ./compositor-images/
 	`)
 	process.exit(0)
 } else if (args.includes('--reset') || args.includes('-r')) {
@@ -261,6 +309,13 @@ By default runs in silent mode (minimal output).
 	} catch (e) {
 		// No actual to delete
 	}
+	try {
+		fs.unlinkSync('./compositor-images/baseline.png')
+		fs.unlinkSync('./compositor-images/actual.png')
+		console.log('✓ Images deleted.')
+	} catch (e) {
+		// No images to delete
+	}
 } else if (args.includes('--clean')) {
 	console.log('Cleaning all files...')
 	const files = ['baseline.json', 'actual.json']
@@ -272,6 +327,15 @@ By default runs in silent mode (minimal output).
 			// File doesn't exist
 		}
 	})
+	
+	// Clean images directory
+	try {
+		fs.rmSync('./compositor-images', { recursive: true, force: true })
+		console.log('✓ Deleted compositor-images directory')
+	} catch (e) {
+		// Directory doesn't exist
+	}
+	
 	console.log('Run again to create fresh baseline.')
 } else {
 	// Run the test
