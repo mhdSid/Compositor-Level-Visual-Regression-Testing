@@ -100,6 +100,19 @@ Traditional visual regression testing (VRT) compares screenshots pixel-by-pixel,
 
 This project demonstrates a revolutionary approach: intercepting Chrome's rendering pipeline at the compositor level (step 4) **before** platform-specific rasterization occurs. We capture paint commands like `DrawRect(10, 20, 100, 50)` which are identical on every machine, rather than the final pixels which differ.
 
+
+## Benchmark Results: Running 5 iterations for each method
+============================================================
+📊 Comparison:
+============================================================
+  (Pixel) avg dration: 2604ms
+  (Compositor) avg dration: 2281ms
+  Speed difference: Compositor is 1.14x faster
+  Storage (Compositor): 1.07 MB
+  Storage (Pixel): 2.5 MB
+  Storage ratio: 2.3x more for pixels
+
+
 ### Key Innovation
 
 We intercept at the **Chrome Compositor** layer using the Chrome DevTools Protocol (CDP) to capture:

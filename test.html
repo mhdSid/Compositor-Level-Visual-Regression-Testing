@@ -1,31 +1,459 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-        .box {
-            position: absolute;
-            top: 50px;
-            left: 100px;
-            width: 200px;
-            height: 100px;
-            background: #3498db;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 20px;
-        }
-        .rotated {
-            transform: rotate(45deg);
-        }
-    </style>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Complex Compositor Test Page</title>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			min-height: 100vh;
+		}
+
+		/* Fixed header - creates its own layer */
+		.header {
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			height: 60px;
+			background: rgba(255, 255, 255, 0.95);
+			backdrop-filter: blur(10px);
+			box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+			z-index: 1000;
+			display: flex;
+			align-items: center;
+			padding: 0 20px;
+			will-change: transform; /* Force layer */
+		}
+
+		.header h1 {
+			font-size: 24px;
+			background: linear-gradient(90deg, #667eea, #764ba2);
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			background-clip: text;
+		}
+
+		/* Floating sidebar - another layer */
+		.sidebar {
+			position: fixed;
+			left: 20px;
+			top: 80px;
+			width: 200px;
+			height: 400px;
+			background: white;
+			border-radius: 12px;
+			box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+			padding: 20px;
+			transform: translateZ(0); /* Force layer */
+			overflow-y: auto;
+		}
+
+		.sidebar h3 {
+			color: #333;
+			margin-bottom: 15px;
+			font-size: 16px;
+		}
+
+		.sidebar ul {
+			list-style: none;
+		}
+
+		.sidebar li {
+			padding: 8px 0;
+			border-bottom: 1px solid #eee;
+			color: #666;
+			transition: color 0.3s;
+		}
+
+		.sidebar li:hover {
+			color: #667eea;
+			transform: translateX(5px);
+		}
+
+		/* Main content area */
+		.main-content {
+			margin-left: 240px;
+			margin-top: 80px;
+			padding: 20px;
+			padding-right: 240px;
+		}
+
+		/* Scrollable list container */
+		.scrollable-list {
+			background: white;
+			border-radius: 12px;
+			padding: 20px;
+			margin-bottom: 30px;
+			max-height: 500px;
+			overflow-y: auto;
+			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+			will-change: scroll-position; /* Hint for optimization */
+		}
+
+		.list-item {
+			display: flex;
+			align-items: center;
+			padding: 15px;
+			margin-bottom: 10px;
+			background: #f8f9fa;
+			border-radius: 8px;
+			transition: all 0.3s ease;
+			cursor: pointer;
+		}
+
+		.list-item:hover {
+			background: #e9ecef;
+			transform: scale(1.02);
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+		}
+
+		.list-item .number {
+			width: 40px;
+			height: 40px;
+			background: linear-gradient(135deg, #667eea, #764ba2);
+			color: white;
+			border-radius: 50%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin-right: 15px;
+			font-weight: bold;
+		}
+
+		.list-item .content {
+			flex: 1;
+		}
+
+		.list-item .title {
+			font-weight: 600;
+			color: #333;
+			margin-bottom: 5px;
+		}
+
+		.list-item .description {
+			color: #666;
+			font-size: 14px;
+		}
+
+		/* Complex table */
+		.table-container {
+			background: white;
+			border-radius: 12px;
+			padding: 20px;
+			margin-bottom: 30px;
+			overflow-x: auto;
+			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+		}
+
+		table {
+			width: 100%;
+			border-collapse: separate;
+			border-spacing: 0;
+		}
+
+		thead {
+			position: sticky;
+			top: 0;
+			background: linear-gradient(90deg, #667eea, #764ba2);
+			color: white;
+			z-index: 10;
+		}
+
+		th {
+			padding: 15px;
+			text-align: left;
+			font-weight: 600;
+			font-size: 14px;
+			text-transform: uppercase;
+			letter-spacing: 0.5px;
+		}
+
+		tbody tr {
+			transition: all 0.3s ease;
+		}
+
+		tbody tr:hover {
+			background: #f8f9fa;
+			transform: translateX(5px);
+		}
+
+		td {
+			padding: 15px;
+			border-bottom: 1px solid #eee;
+			color: #333;
+		}
+
+		.status-badge {
+			display: inline-block;
+			padding: 4px 12px;
+			border-radius: 20px;
+			font-size: 12px;
+			font-weight: 600;
+			text-transform: uppercase;
+		}
+
+		.status-active {
+			background: #d4edda;
+			color: #155724;
+		}
+
+		.status-pending {
+			background: #fff3cd;
+			color: #856404;
+		}
+
+		.status-inactive {
+			background: #f8d7da;
+			color: #721c24;
+		}
+
+		/* Animated elements - force layers */
+		.floating-card {
+			position: fixed;
+			right: 20px;
+			top: 80px;
+			width: 200px;
+			background: white;
+			border-radius: 12px;
+			padding: 20px;
+			box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+			animation: float 3s ease-in-out infinite;
+			will-change: transform; /* Force layer */
+		}
+
+		@keyframes float {
+			0%, 100% { transform: translateY(0) rotate(0deg); }
+			50% { transform: translateY(-20px) rotate(2deg); }
+		}
+
+		.rotating-element {
+			width: 100px;
+			height: 100px;
+			background: linear-gradient(45deg, #ff6b6b, #ffd93d);
+			border-radius: 12px;
+			margin: 20px auto;
+			animation: rotate 4s linear infinite;
+			will-change: transform; /* Force layer */
+		}
+
+		@keyframes rotate {
+			from { transform: rotate(0deg); }
+			to { transform: rotate(360deg); }
+		}
+
+		/* Canvas element for complex rendering */
+		.canvas-container {
+			background: white;
+			border-radius: 12px;
+			padding: 20px;
+			margin-bottom: 30px;
+			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+		}
+
+		canvas {
+			border: 2px solid #eee;
+			border-radius: 8px;
+			width: 100%;
+			max-width: 600px;
+			height: 200px;
+			display: block;
+			margin: 0 auto;
+		}
+
+		/* 3D transformed element */
+		.perspective-container {
+			perspective: 1000px;
+			margin: 30px 0;
+		}
+
+		.card-3d {
+			background: white;
+			border-radius: 12px;
+			padding: 30px;
+			box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+			transform: rotateY(15deg) rotateX(5deg);
+			transform-style: preserve-3d;
+			transition: transform 0.3s;
+			will-change: transform; /* Force layer */
+		}
+
+		.card-3d:hover {
+			transform: rotateY(0deg) rotateX(0deg);
+		}
+
+		/* Footer */
+		.footer {
+			background: rgba(255, 255, 255, 0.1);
+			color: white;
+			text-align: center;
+			padding: 30px;
+			margin-top: 50px;
+			backdrop-filter: blur(10px);
+		}
+	</style>
 </head>
 <body>
-    <div class="box">Hello World</div>
-    <div class="box rotated" style="top: 200px;">Rotated Box</div>
+	<!-- Fixed Header -->
+	<header class="header">
+		<h1>Complex Compositor Test Page</h1>
+	</header>
+
+	<!-- Fixed Sidebar -->
+	<aside class="sidebar">
+		<h3>Navigation</h3>
+		<ul>
+			<li>Dashboard</li>
+			<li>Analytics</li>
+			<li>Reports</li>
+			<li>Settings</li>
+			<li>Profile</li>
+			<li>Messages</li>
+			<li>Notifications</li>
+			<li>Help</li>
+		</ul>
+	</aside>
+
+	<!-- Floating Animated Card -->
+	<div class="floating-card">
+		<h3>Stats</h3>
+		<div class="rotating-element"></div>
+		<p style="text-align: center; color: #666; margin-top: 10px;">Live Updates</p>
+	</div>
+
+	<!-- Main Content -->
+	<main class="main-content">
+		
+		<!-- Scrollable List -->
+		<div class="scrollable-list">
+			<h2 style="margin-bottom: 20px; color: #333;">Scrollable List (100 items)</h2>
+			<div id="list-container"></div>
+		</div>
+
+		<!-- Data Table -->
+		<div class="table-container">
+			<h2 style="margin-bottom: 20px; color: #333;">Complex Data Table</h2>
+			<table>
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Name</th>
+						<th>Department</th>
+						<th>Email</th>
+						<th>Status</th>
+						<th>Date</th>
+						<th>Performance</th>
+					</tr>
+				</thead>
+				<tbody id="table-body"></tbody>
+			</table>
+		</div>
+
+		<!-- Canvas Drawing -->
+		<div class="canvas-container">
+			<h2 style="margin-bottom: 20px; color: #333;">Canvas Visualization</h2>
+			<canvas id="chart"></canvas>
+		</div>
+
+		<!-- 3D Card -->
+		<div class="perspective-container">
+			<div class="card-3d">
+				<h2 style="color: #333; margin-bottom: 15px;">3D Transformed Card</h2>
+				<p style="color: #666; line-height: 1.6;">
+					This card has 3D CSS transforms applied, creating its own compositor layer.
+					Hover to see the transform animation. The browser creates separate layers
+					for elements with 3D transforms to optimize rendering performance.
+				</p>
+			</div>
+		</div>
+
+	</main>
+
+	<!-- Footer -->
+	<footer class="footer">
+		<p>© 2024 Compositor Test - Generating Complex Layers for Testing</p>
+	</footer>
+
+	<script>
+		// Generate scrollable list items
+		const listContainer = document.getElementById('list-container');
+		for (let i = 1; i <= 100; i++) {
+			const item = document.createElement('div');
+			item.className = 'list-item';
+			item.innerHTML = `
+				<div class="number">${i}</div>
+				<div class="content">
+					<div class="title">List Item ${i}</div>
+					<div class="description">This is item number ${i} with some descriptive text that varies in length to create realistic content.</div>
+				</div>
+			`;
+			listContainer.appendChild(item);
+		}
+
+		// Generate table rows
+		const tableBody = document.getElementById('table-body');
+		const departments = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance'];
+		const statuses = ['active', 'pending', 'inactive'];
+		const names = ['John Smith', 'Jane Doe', 'Bob Johnson', 'Alice Williams', 'Charlie Brown'];
+		
+		for (let i = 1; i <= 50; i++) {
+			const row = document.createElement('tr');
+			const status = statuses[i % 3];
+			const name = names[i % 5];
+			const dept = departments[i % 5];
+			
+			row.innerHTML = `
+				<td>#${1000 + i}</td>
+				<td>${name}</td>
+				<td>${dept}</td>
+				<td>${name.toLowerCase().replace(' ', '.')}@company.com</td>
+				<td><span class="status-badge status-${status}">${status}</span></td>
+				<td>${new Date(2024, 0, i).toLocaleDateString()}</td>
+				<td>${Math.floor(Math.random() * 40 + 60)}%</td>
+			`;
+			tableBody.appendChild(row);
+		}
+
+		// Draw on canvas
+		const canvas = document.getElementById('chart');
+		const ctx = canvas.getContext('2d');
+		canvas.width = 600;
+		canvas.height = 200;
+
+		// Draw a simple chart
+		ctx.strokeStyle = '#667eea';
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		
+		for (let i = 0; i < canvas.width; i += 10) {
+			const y = Math.sin(i * 0.02) * 50 + 100;
+			if (i === 0) {
+				ctx.moveTo(i, y);
+			} else {
+				ctx.lineTo(i, y);
+			}
+		}
+		ctx.stroke();
+
+		// Draw bars
+		ctx.fillStyle = 'rgba(102, 126, 234, 0.3)';
+		for (let i = 0; i < 10; i++) {
+			const height = Math.random() * 80 + 20;
+			ctx.fillRect(i * 60 + 10, 200 - height, 40, height);
+		}
+
+		// Add some text
+		ctx.fillStyle = '#333';
+		ctx.font = '14px Arial';
+		ctx.fillText('Performance Metrics', 10, 20);
+	</script>
 </body>
 </html>

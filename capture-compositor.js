@@ -7,11 +7,20 @@ import { dirname } from 'path'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
+// Parse command line arguments
+const args = process.argv.slice(2)
+const verbose = args.includes('--verbose') || args.includes('-v')
+const log = verbose ? console.log : () => {}
+
+let browser = null
+
 async function extractPaintCommands(url) {
-	const browser = await puppeteer.launch({ 
-		headless: true,
-		args: ['--disable-gpu-rasterization', '--no-sandbox'],
-	})
+	if (!browser) {
+		browser = await puppeteer.launch({
+			headless: true,
+			args: ['--disable-gpu-rasterization', '--no-sandbox'],
+		})
+	}
 	const page = await browser.newPage()
 	
 	// Navigate FIRST
@@ -57,7 +66,7 @@ async function extractPaintCommands(url) {
 	
 	layers.push(...detectedLayers)
 	
-	console.log(`Found ${layers.length} layers`)
+	log(`Found ${layers.length} layers`)
 	
 	// Extract paint commands from each layer
 	const allCommands = []
@@ -76,16 +85,18 @@ async function extractPaintCommands(url) {
 			
 			if (commandLog) {
 				allCommands.push(commandLog)
-				console.log(`Layer ${layer.layerId}: ${commandLog.length} chars`)
+				log(`Layer ${layer.layerId}: ${commandLog.length} chars`)
 				
 				// Parse and show what kind of commands we got
-				try {
-					const commands = JSON.parse(commandLog)
-					if (Array.isArray(commands) && commands.length > 0) {
-						console.log(`  Contains ${commands.length} paint operations`)
+				if (verbose) {
+					try {
+						const commands = JSON.parse(commandLog)
+						if (Array.isArray(commands) && commands.length > 0) {
+							log(`  Contains ${commands.length} paint operations`)
+						}
+					} catch (e) {
+						// commandLog might not be JSON
 					}
-				} catch (e) {
-					// commandLog might not be JSON
 				}
 			}
 			
@@ -94,13 +105,13 @@ async function extractPaintCommands(url) {
 				snapshotId: snapshotId,
 			})
 		} catch (e) {
-			console.log(`Layer ${layer.layerId}: Could not snapshot (${e.message})`)
+			log(`Layer ${layer.layerId}: Could not snapshot (${e.message})`)
 		}
 	}
 	
 	// If no layers found, try the document's root layer
 	if (allCommands.length === 0) {
-		console.log('Trying root layer approach...')
+		log('Trying root layer approach...')
 		try {
 			// Create a snapshot of the entire page
 			const { snapshotId } = await client.send('LayerTree.makeSnapshot', {
@@ -113,23 +124,23 @@ async function extractPaintCommands(url) {
 			
 			if (commandLog) {
 				allCommands.push(commandLog)
-				console.log(`Root snapshot: ${commandLog.length} chars`)
+				log(`Root snapshot: ${commandLog.length} chars`)
 			}
 			
 			await client.send('LayerTree.releaseSnapshot', {
 				snapshotId: snapshotId,
 			})
 		} catch (e) {
-			console.log('Root layer snapshot failed:', e.message)
+			log('Root layer snapshot failed:', e.message)
 		}
 	}
 	
 	if (allCommands.length === 0) {
-		console.log('⚠️  No paint commands captured - layers might not be accessible')
-		console.log('This can happen with simple pages that don\'t create separate layers')
+		log('⚠️  No paint commands captured - layers might not be accessible')
+		log('This can happen with simple pages that don\'t create separate layers')
 	}
 	
-	await browser.close()
+	await page.close()
 	
 	// Create hash from paint commands
 	const commandsString = JSON.stringify(allCommands)
@@ -144,8 +155,6 @@ async function extractPaintCommands(url) {
 
 async function loadExistingCommands(filename) {
 	try {
-		if (!fs.existsSync(filename)) throw new Error('file does not exist')
-
 		const data = fs.readFileSync(filename, 'utf8')
 		const parsed = JSON.parse(data)
 		
@@ -161,16 +170,16 @@ async function loadExistingCommands(filename) {
 
 async function comparePages() {
 	console.log('=== Compositor Paint Command Test ===\n')
-	
+
 	// Check if baseline exists AND is valid
 	let baseline = await loadExistingCommands('baseline.json')
 
 	if (baseline && baseline.hash && baseline.count > 0) {
-		console.log('✓ Found valid baseline.json')
-		console.log(`  Baseline hash: ${baseline.hash}, ${baseline.count} command logs`)
+		log('✓ Found valid baseline.json')
+		log(`  Baseline hash: ${baseline.hash}, ${baseline.count} command logs`)
 	} else {
 		// Either doesn't exist or is invalid - create new baseline
-		console.log('No valid baseline found. Creating new baseline...')
+		log('No valid baseline found. Creating new baseline...')
 		baseline = await extractPaintCommands('file://' + __dirname + '/test.html')
 		// Save the FULL object structure, not just commands
 		fs.writeFileSync('baseline.json', JSON.stringify({
@@ -178,11 +187,11 @@ async function comparePages() {
 			hash: baseline.hash,
 			count: baseline.count,
 		}, null, 2))
-		console.log(`✓ Baseline created: hash=${baseline.hash}, ${baseline.count} command logs`)
+		log(`✓ Baseline created: hash=${baseline.hash}, ${baseline.count} command logs`)
 	}
 	
 	// Always capture fresh actual
-	console.log('\nCapturing actual state...')
+	log('\nCapturing actual state...')
 	const actual = await extractPaintCommands('file://' + __dirname + '/test.html')
 	// Save the FULL object structure, not just commands
 	fs.writeFileSync('actual.json', JSON.stringify({
@@ -190,36 +199,55 @@ async function comparePages() {
 		hash: actual.hash,
 		count: actual.count,
 	}, null, 2))
-	console.log(`✓ Actual captured: hash=${actual.hash}, ${actual.count} command logs`)
+	log(`✓ Actual captured: hash=${actual.hash}, ${actual.count} command logs`)
 	
 	// Compare
 	const identical = baseline.hash === actual.hash
-	console.log(`\n${identical ? '✅' : '❌'} Result: ${identical ? 'MATCH' : 'MISMATCH'}`)
-	console.log(`  Baseline: ${baseline.hash}`)
-	console.log(`  Actual:   ${actual.hash}`)
 	
+	// Always show the result
+	console.log(`${identical ? '✅' : '❌'} Result: ${identical ? 'MATCH' : 'MISMATCH'}`)
+	console.log(`Baseline: ${baseline.hash}`)
+	console.log(`Actual:   ${actual.hash}`)
+
 	if (!identical && baseline.count > 0 && actual.count > 0) {
-		console.log('\n⚠️  Visual regression detected!')
-		console.log('  Check baseline.json and actual.json for differences')
+		log('\n⚠️  Visual regression detected!')
+		log('  Check baseline.json and actual.json for differences')
 		
 		// Try to show where they differ
 		if (baseline.commands.length !== actual.commands.length) {
-			console.log(`  Different number of layers: ${baseline.commands.length} vs ${actual.commands.length}`)
+			log(`  Different number of layers: ${baseline.commands.length} vs ${actual.commands.length}`)
 		} else {
 			for (let i = 0; i < baseline.commands.length; i++) {
 				if (baseline.commands[i] !== actual.commands[i]) {
-					console.log(`  Layer ${i} differs`)
+					log(`  Layer ${i} differs`)
 					break
 				}
 			}
 		}
 	}
+	
+	// Close browser at the end
+	if (browser) {
+		await browser.close()
+		browser = null
+	}
 }
 
-// Add command line arguments
-const args = process.argv.slice(2)
+// Handle command line arguments
+if (args.includes('--help') || args.includes('-h')) {
+	console.log(`
+Usage: node capture-compositor.js [options]
 
-if (args.includes('--reset') || args.includes('-r')) {
+Options:
+  --verbose, -v    Show detailed output
+  --reset, -r      Reset baseline
+  --clean          Clean all files
+  --help, -h       Show this help
+
+By default runs in silent mode (minimal output).
+	`)
+	process.exit(0)
+} else if (args.includes('--reset') || args.includes('-r')) {
 	console.log('Resetting baseline...')
 	try {
 		fs.unlinkSync('baseline.json')
