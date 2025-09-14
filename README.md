@@ -101,18 +101,6 @@ Traditional visual regression testing (VRT) compares screenshots pixel-by-pixel,
 This project demonstrates a revolutionary approach: intercepting Chrome's rendering pipeline at the compositor level (step 4) **before** platform-specific rasterization occurs. We capture paint commands like `DrawRect(10, 20, 100, 50)` which are identical on every machine, rather than the final pixels which differ.
 
 
-## Benchmark Results: Running 5 iterations for each method
-============================================================
-📊 Comparison:
-============================================================
-  (Pixel) avg dration: 2604ms
-  (Compositor) avg dration: 2281ms
-  Speed difference: Compositor is 1.14x faster
-  Storage (Compositor): 1.07 MB
-  Storage (Pixel): 2.5 MB
-  Storage ratio: 2.3x more for pixels
-
-
 ### Key Innovation
 
 We intercept at the **Chrome Compositor** layer using the Chrome DevTools Protocol (CDP) to capture:
@@ -217,6 +205,46 @@ Layer 11: 11 chars
   Baseline: e4967781229be3d9
   Actual:   e4967781229be3d9
 ```
+
+## VRT Benchmark Results
+
+### Performance Comparison
+
+| Metric | Compositor Method | Pixel Method | Winner |
+|--------|------------------|--------------|---------|
+| **Average Duration** | 2.28 seconds | 2.60 seconds | Compositor (14% faster) |
+| **Min Duration** | 2.24 seconds | 2.60 seconds | Compositor |
+| **Max Duration** | 2.40 seconds | 2.62 seconds | Compositor |
+| **Success Rate** | 100% | 0% | Compositor |
+| **Consistency** | Perfect | Inconsistent | Compositor |
+
+### Storage Comparison
+
+| Method | Storage Size | 
+|--------|-------------|
+| **Compositor** | 1.07 MB |
+| **Pixel** | 2.50 MB |
+| **Ratio** | Pixel uses 2.3× more storage |
+
+### Test Results by Iteration
+
+| Iteration | Compositor (ms) | Match | Pixel (ms) | Match | Diff % |
+|-----------|----------------|-------|------------|-------|--------|
+| 1 | 2,396 | ✅ | 2,598 | ❌ | 0.38% |
+| 2 | 2,260 | ✅ | 2,617 | ❌ | 0.28% |
+| 3 | 2,251 | ✅ | 2,599 | ❌ | 0.39% |
+| 4 | 2,240 | ✅ | 2,611 | ❌ | 0.24% |
+| 5 | 2,258 | ✅ | 2,596 | ❌ | 0.48% |
+
+### Summary
+
+**🏆 Winner: Compositor Method**
+
+- **14% faster** execution (323ms faster on average)
+- **100% reliability** vs 0% for pixel method
+- **2.3× smaller** storage footprint
+- **Consistent hash** across all runs: `c9060c1da6962157`
+- **Zero false positives**
 
 ## Requirements
 
