@@ -1,0 +1,153 @@
+{
+  "commands": [
+    [
+      {
+        "method": "drawPaint",
+        "params": {
+          "paint": {
+            "color": "#FFFFFFFF",
+            "strokeWidth": 0,
+            "strokeMiter": 4,
+            "flags": "none",
+            "strokeCap": "Butt",
+            "strokeJoin": "Miter",
+            "styleName": "Fill"
+          }
+        }
+      }
+    ],
+    [
+      {
+        "method": "drawPaint",
+        "params": {
+          "paint": {
+            "color": "#00000000",
+            "strokeWidth": 0,
+            "strokeMiter": 4,
+            "flags": "none",
+            "strokeCap": "Butt",
+            "strokeJoin": "Miter",
+            "styleName": "Fill",
+            "blendMode": "Src"
+          }
+        }
+      },
+      {
+        "method": "save"
+      },
+      {
+        "method": "translate",
+        "params": {
+          "dx": -93,
+          "dy": -50
+        }
+      },
+      {
+        "method": "drawRect",
+        "params": {
+          "rect": {
+            "left": 100,
+            "top": 50,
+            "right": 300,
+            "bottom": 150
+          },
+          "paint": {
+            "color": "#FF3498DB",
+            "strokeWidth": 0,
+            "strokeMiter": 4,
+            "flags": "AntiAlias",
+            "strokeCap": "Butt",
+            "strokeJoin": "Miter",
+            "styleName": "Fill"
+          }
+        }
+      },
+      {
+        "method": "drawTextBlob",
+        "params": {
+          "x": 148.5,
+          "y": 107,
+          "paint": {
+            "color": "#FFFFFFFF",
+            "strokeWidth": 0,
+            "strokeMiter": 4,
+            "flags": "AntiAlias",
+            "strokeCap": "Butt",
+            "strokeJoin": "Miter",
+            "styleName": "Fill"
+          }
+        }
+      },
+      {
+        "method": "save"
+      },
+      {
+        "method": "concat44",
+        "params": {
+          "matrix44": [
+            0.70710676908493,
+            0.70710676908493,
+            0,
+            0,
+            -0.70710676908493,
+            0.70710676908493,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            164.644653320313,
+            143.933975219727,
+            0,
+            1
+          ]
+        }
+      },
+      {
+        "method": "drawRect",
+        "params": {
+          "rect": {
+            "left": 0,
+            "top": 0,
+            "right": 200,
+            "bottom": 100
+          },
+          "paint": {
+            "color": "#FF3498DB",
+            "strokeWidth": 0,
+            "strokeMiter": 4,
+            "flags": "AntiAlias",
+            "strokeCap": "Butt",
+            "strokeJoin": "Miter",
+            "styleName": "Fill"
+          }
+        }
+      },
+      {
+        "method": "drawTextBlob",
+        "params": {
+          "x": 44.953125,
+          "y": 57,
+          "paint": {
+            "color": "#FFFFFFFF",
+            "strokeWidth": 0,
+            "strokeMiter": 4,
+            "flags": "AntiAlias",
+            "strokeCap": "Butt",
+            "strokeJoin": "Miter",
+            "styleName": "Fill"
+          }
+        }
+      },
+      {
+        "method": "restore"
+      },
+      {
+        "method": "restore"
+      }
+    ]
+  ],
+  "hash": "e4967781229be3d9",
+  "count": 2
+}
