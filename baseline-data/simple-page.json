@@ -1,7 +1,7 @@
 {
   "name": "simple-page",
-  "timestamp": "2025-09-15T13:22:10.916Z",
-  "hash": "456d7785e41c4afd",
+  "timestamp": "2025-09-15T14:36:43.299Z",
+  "hash": "dacb7841cb6ef6a9",
   "layerCount": 25,
   "commands": [
     {
@@ -22984,6 +22984,54 @@
           "styleName": "Fill"
         }
       }
+    },
+    {
+      "method": "save",
+      "params": {}
+    },
+    {
+      "method": "translate",
+      "params": {
+        "dx": 369,
+        "dy": 15
+      }
+    },
+    {
+      "method": "clipRect",
+      "params": {
+        "rect": {
+          "left": 0,
+          "top": 0,
+          "right": 30,
+          "bottom": 30
+        },
+        "SkRegion::Op": "kIntersect_Op",
+        "softClipEdgeStyle": true
+      }
+    },
+    {
+      "method": "drawOval",
+      "params": {
+        "oval": {
+          "left": 5,
+          "top": 5,
+          "right": 25,
+          "bottom": 25
+        },
+        "paint": {
+          "color": "#FF0000FF",
+          "strokeWidth": 0,
+          "strokeMiter": 4,
+          "flags": "AntiAlias",
+          "strokeCap": "Butt",
+          "strokeJoin": "Miter",
+          "styleName": "Fill"
+        }
+      }
+    },
+    {
+      "method": "restore",
+      "params": {}
     },
     {
       "method": "restore",

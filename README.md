@@ -1,6 +1,6 @@
 # Compositor-Level Visual Regression Testing
 
-A revolutionary approach to visual regression testing that intercepts Chrome's rendering pipeline at the compositor level, capturing deterministic paint commands instead of comparing pixels.
+An approach to visual regression testing that intercepts Chrome's rendering pipeline at the compositor level, capturing deterministic paint commands instead of comparing pixels.
 
 ## Table of Contents
 
@@ -223,6 +223,22 @@ compositor-vrt/
 - **Layer Creation**: Simple pages may not create compositor layers
   - Add `will-change: transform` to force layer creation
   - Use `transform: translateZ(0)` as alternative
+- **Canvas Content**: Canvas internal changes are NOT detected
+  - Compositor sees canvas as a single opaque texture
+  - Drawing operations inside canvas don't affect paint commands
+  - Requires additional canvas.toDataURL() or pixel extraction
+- **Video Frames**: Current video frame changes are not captured
+  - Video elements appear as static layers to compositor
+  - Frame-by-frame changes require separate video capture logic
+- **WebGL/3D Graphics**: Internal 3D rendering changes go undetected
+  - WebGL renders to a bitmap that compositor treats as static
+  - Need specialized WebGL state capture for full coverage
+- **Dynamic Images**: Changing image sources may not trigger layer changes
+  - Image swaps might maintain same paint structure
+  - Requires tracking image URLs separately
+- **SVG Animations**: Internal SVG state changes might not propagate
+  - Some SVG updates don't trigger new paint commands
+  - Need SVG DOM serialization for complete detection
 
 ## Contributing
 
