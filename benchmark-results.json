@@ -1,38 +1,38 @@
 {
-  "timestamp": "2025-09-14T14:32:59.344Z",
+  "timestamp": "2025-09-15T13:29:59.866Z",
   "iterations": 5,
   "compositorResults": [
     {
       "iteration": 1,
-      "duration": 2396,
+      "duration": 2843,
       "match": true,
       "layers": 0,
       "hash": "c9060c1da6962157"
     },
     {
       "iteration": 2,
-      "duration": 2260,
+      "duration": 2751,
       "match": true,
       "layers": 0,
       "hash": "c9060c1da6962157"
     },
     {
       "iteration": 3,
-      "duration": 2251,
+      "duration": 2760,
       "match": true,
       "layers": 0,
       "hash": "c9060c1da6962157"
     },
     {
       "iteration": 4,
-      "duration": 2240,
+      "duration": 2745,
       "match": true,
       "layers": 0,
       "hash": "c9060c1da6962157"
     },
     {
       "iteration": 5,
-      "duration": 2258,
+      "duration": 2729,
       "match": true,
       "layers": 0,
       "hash": "c9060c1da6962157"
@@ -41,60 +41,60 @@
   "pixelResults": [
     {
       "iteration": 1,
-      "duration": 2598,
+      "duration": 2651,
+      "match": false,
+      "diffPercentage": 0.43,
+      "mismatchedPixels": 0
+    },
+    {
+      "iteration": 2,
+      "duration": 2613,
+      "match": false,
+      "diffPercentage": 0.32,
+      "mismatchedPixels": 0
+    },
+    {
+      "iteration": 3,
+      "duration": 2609,
       "match": false,
       "diffPercentage": 0.38,
       "mismatchedPixels": 0
     },
     {
-      "iteration": 2,
-      "duration": 2617,
-      "match": false,
-      "diffPercentage": 0.28,
-      "mismatchedPixels": 0
-    },
-    {
-      "iteration": 3,
-      "duration": 2599,
-      "match": false,
-      "diffPercentage": 0.39,
-      "mismatchedPixels": 0
-    },
-    {
       "iteration": 4,
-      "duration": 2596,
+      "duration": 2620,
       "match": false,
-      "diffPercentage": 0.24,
+      "diffPercentage": 0.42,
       "mismatchedPixels": 0
     },
     {
       "iteration": 5,
-      "duration": 2611,
+      "duration": 2591,
       "match": false,
-      "diffPercentage": 0.48,
+      "diffPercentage": 0.33,
       "mismatchedPixels": 0
     }
   ],
   "statistics": {
     "compositor": {
-      "avgDuration": 2281,
-      "minDuration": 2240,
-      "maxDuration": 2396,
+      "avgDuration": 2766,
+      "minDuration": 2729,
+      "maxDuration": 2843,
       "successRate": "100.0",
       "consistency": "Perfect"
     },
     "pixel": {
-      "avgDuration": 2604,
-      "minDuration": 2596,
-      "maxDuration": 2617,
+      "avgDuration": 2617,
+      "minDuration": 2591,
+      "maxDuration": 2651,
       "successRate": "0.0",
       "consistency": "Inconsistent"
     }
   },
   "comparison": {
-    "speedRatio": "1.14",
+    "speedRatio": "0.95",
     "storageRatio": "2.3",
-    "compositorStorage": 1120298,
-    "pixelStorage": 2622786
+    "compositorStorage": 1120484,
+    "pixelStorage": 2622826
   }
 }

@@ -1,0 +1,42 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "sourceType": "module",
+    "ecmaVersion": 2020,
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "plugins": ["workspaces", "@typescript-eslint"],
+  "env": {
+    "jest": true,
+    "browser": true,
+    "node": true,
+    "es2020": true
+  },
+  "globals": {
+    "browser": true
+  },
+  "extends": [
+    "standard",
+    "standard-jsx",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "rules": {
+    "no-unsafe-finally": "off",
+    "no-tabs": "off",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-require-imports": "off",
+    "@typescript-eslint/no-unused-vars": "off"
+  },
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx"],
+      "parserOptions": {
+        "project": "./tsconfig.json"
+      }
+    }
+  ]
+}
