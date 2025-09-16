@@ -42,5 +42,8 @@
     "jest": "^29.2.2",
     "jest-runner-eslint": "^2.1.0"
   },
-  "packageManager": "yarn@4.9.4"
+  "packageManager": "yarn@4.9.4",
+  "volta": {
+    "node": "24.8.0"
+  }
 }
