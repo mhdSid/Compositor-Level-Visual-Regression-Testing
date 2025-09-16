@@ -10,6 +10,11 @@
 			padding: 0;
 			box-sizing: border-box;
 		}
+		*:not(body) {
+			will-change: contents, transform !important;
+			backface-visibility: hidden !important;
+			transform: translateZ(0) !important;
+		}
 
 		body {
 			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
@@ -53,6 +58,7 @@
 			border-radius: 12px;
 			box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 			padding: 20px;
+			will-change: transform; /* Force layer */
 			transform: translateZ(0); /* Force layer */
 			overflow-y: auto;
 		}
@@ -419,8 +425,8 @@
 				<td>${dept}</td>
 				<td>${name.toLowerCase().replace(' ', '.')}@company.com</td>
 				<td><span class="status-badge status-${status}">${status}</span></td>
-				<td>${new Date(2024, 0, i).toLocaleDateString()}</td>
-				<td>${Math.floor(Math.random() * 40 + 60)}%</td>
+				<td>2024-01-${String(i).padStart(2, '0')}</td>
+				<td>${60 + (i % 40)}%</td>
 			`;
 			tableBody.appendChild(row);
 		}
@@ -449,7 +455,8 @@
 		// Draw bars
 		ctx.fillStyle = 'rgba(102, 126, 234, 0.3)';
 		for (let i = 0; i < 10; i++) {
-			const height = Math.random() * 80 + 20;
+			// Use deterministic height based on index
+			const height = ((i * 17) % 80) + 20;
 			ctx.fillRect(i * 60 + 10, 200 - height, 40, height);
 		}
 

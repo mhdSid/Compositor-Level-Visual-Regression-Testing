@@ -14,9 +14,20 @@ export const config = {
     browserName: 'chrome',
     'goog:chromeOptions': {
       args: [
-        '--headless',
+        '--disable-background-timer-throttling',
         '--no-sandbox',
-        '--disable-gpu-rasterization'
+        '--ignore-certificate-errors',
+        '--safebrowsing-disable-auto-update',
+        '--use-mock-keychain',
+        '--headless',
+        "--proxy-server='direct://'",
+        '--proxy-bypass-list=*',
+        '--disable-setuid-sandbox',
+        '--single-process',
+        '--no-zygote',
+        '--font-render-hinting=none',
+        '--hide-scrollbars',
+        '--enable-font-antialiasing'
       ]
     }
   }],
@@ -35,6 +46,8 @@ export const config = {
       baselineDir: './baseline-data',
       actualDir: './actual-data',
       diffDir: './diff-images',
+      mode: process.env.CI ? 'pixel' : 'compositor',
+      pixelThreshold: 0,
       updateBaseline: process.env.UPDATE_BASELINE === 'true'
     }]
   ],
